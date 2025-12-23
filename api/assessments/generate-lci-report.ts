@@ -117,52 +117,40 @@ export default async function handler(
     const highest = sorted[0];
     const lowest = sorted[sorted.length - 1];
 
-    const prompt = `你是一位资深的亲密关系心理咨询师，请基于以下LCI爱情浓度测试数据，撰写一份专业深度的分析报告。
+    const prompt = `你是亲密关系心理咨询师，基于LCI爱情浓度测试数据撰写深度分析报告。
 
-【测试数据】
-- LCI爱情浓度指数: ${percentage}%
-- 关系等级: ${level}
-- 五维得分详情:
-  · 沟通维度: ${dimensionScores.communication}/40 (${commStatus})
-  · 行动维度: ${dimensionScores.action}/40 (${actStatus})
-  · 情感维度: ${dimensionScores.emotion}/40 (${emoStatus})
-  · 尊重维度: ${dimensionScores.respect}/40 (${respStatus})
-  · 成长维度: ${dimensionScores.growth}/40 (${growStatus})
-- 最强维度: ${highest.name}(${highest.score}分)
-- 最弱维度: ${lowest.name}(${lowest.score}分)
+【数据】
+- LCI指数: ${percentage}% | 等级: ${level}
+- 沟通: ${dimensionScores.communication}/40(${commStatus}) | 行动: ${dimensionScores.action}/40(${actStatus})
+- 情感: ${dimensionScores.emotion}/40(${emoStatus}) | 尊重: ${dimensionScores.respect}/40(${respStatus}) | 成长: ${dimensionScores.growth}/40(${growStatus})
+- 最强: ${highest.name}(${highest.score}分) | 最弱: ${lowest.name}(${lowest.score}分)
 
-【报告要求】
-请生成1200-1500字的深度报告，使用Markdown格式，包含以下部分：
+【要求】生成1000字左右的Markdown报告，禁用#标题，用**加粗**做标题：
 
 **整体评估**
-深入分析${percentage}%的爱情浓度意味着什么，这段关系目前处于什么状态，双方的情感投入程度如何。结合"${level}"这个等级，给出专业的关系诊断。(150字)
+${percentage}%爱情浓度的关系诊断，"${level}"等级意味着什么。(100字)
 
-**五维分析**
-对每个维度进行深度解读：
-- **沟通(${dimensionScores.communication}/40)**: 分析沟通模式、表达方式、倾听质量
-- **行动(${dimensionScores.action}/40)**: 分析付出程度、陪伴质量、承诺兑现
-- **情感(${dimensionScores.emotion}/40)**: 分析情感连接深度、安全感、亲密程度
-- **尊重(${dimensionScores.respect}/40)**: 分析边界感、价值认同、人格尊重
-- **成长(${dimensionScores.growth}/40)**: 分析共同愿景、相互促进、未来期待
-每个维度80-100字，要有具体的行为表现描述和心理洞察。
+**五维深度解析**
+每维度60字，分析具体行为表现和心理含义：
+- 沟通：表达与倾听质量
+- 行动：付出与陪伴程度
+- 情感：连接深度与安全感
+- 尊重：边界与价值认同
+- 成长：共同愿景与促进
 
 **关系闪光点**
-基于数据找出2-3个关系中的积极因素，具体说明为什么这些是优势，如何利用这些优势。
+2个优势及如何利用(100字)
 
-**需要关注**
-指出1-2个核心问题，分析问题背后的心理动因，为什么这些问题如果不解决会影响关系。
+**核心问题**
+1-2个问题及心理动因(100字)
 
-**改善建议**
-给出3条具体可操作的建议，每条建议要包含：具体做什么、怎么做、预期效果。建议要针对性强，不要泛泛而谈。
+**行动建议**
+3条具体可操作建议，每条含做什么+怎么做(150字)
 
 **寄语**
-一句温暖有力的话，给予希望和方向。
+一句温暖有力的话
 
-【风格要求】
-- 专业但不冰冷，温暖但不敷衍
-- 洞察深刻，直击问题本质
-- 建议具体可行，不说空话
-- 禁止使用"#"符号作为标题`;
+风格：专业深刻，温暖不敷衍，针对性强`;
 
     // 调用 DeepSeek API
     const apiResponse = await fetch(DEEPSEEK_API_URL, {
@@ -183,12 +171,12 @@ export default async function handler(
             content: prompt
           }
         ],
-        temperature: 0.75,
-        max_tokens: 2500,
-        top_p: 0.95,
+        temperature: 0.7,
+        max_tokens: 2000,
+        top_p: 0.9,
         stream: false
       }),
-      signal: AbortSignal.timeout(55000) // 55秒超时
+      signal: AbortSignal.timeout(50000) // 50秒超时
     });
 
     if (!apiResponse.ok) {
