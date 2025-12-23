@@ -13,19 +13,28 @@
       }
     }
   ],
-  "routes": [
+  "rewrites": [
+    { "source": "/api/auth/admin-login", "destination": "/api/auth/admin-login.ts" },
+    { "source": "/api/access-codes/generate", "destination": "/api/access-codes/generate.ts" },
+    { "source": "/api/access-codes/list", "destination": "/api/access-codes/list.ts" },
+    { "source": "/api/access-codes/stats", "destination": "/api/access-codes/stats.ts" },
+    { "source": "/api/access-codes/validate", "destination": "/api/access-codes/validate.ts" },
+    { "source": "/api/assessments/export", "destination": "/api/assessments/export.ts" },
+    { "source": "/api/assessments/generate-asa-report", "destination": "/api/assessments/generate-asa-report.ts" },
+    { "source": "/api/assessments/generate-lci-report", "destination": "/api/assessments/generate-lci-report.ts" },
+    { "source": "/api/assessments/list", "destination": "/api/assessments/list.ts" },
+    { "source": "/api/assessments/stats", "destination": "/api/assessments/stats.ts" },
+    { "source": "/api/assessments/submit", "destination": "/api/assessments/submit.ts" },
+    { "source": "/api/assessments/:id", "destination": "/api/assessments/[id].ts" }
+  ],
+  "headers": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1",
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With"
-      }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, X-Requested-With" }
+      ]
     }
   ]
 }
