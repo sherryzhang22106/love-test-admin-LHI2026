@@ -47,7 +47,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       skip,
       take: limitNum,
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        totalScore: true,
+        category: true,
+        attachmentStyle: true,
+        productType: true,
+        aiAnalysis: true,
+        createdAt: true,
         accessCode: {
           select: { code: true }
         }

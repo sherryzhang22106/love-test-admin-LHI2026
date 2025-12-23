@@ -2,7 +2,14 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
+let prisma: PrismaClient | null = null;
+
+function getPrisma() {
+  if (!prisma) {
+    prisma = new PrismaClient();
+  }
+  return prisma;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
@@ -53,10 +60,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Fetch assessments with access code info
-    const assessments = await prisma.assessment.findMany({
+    const db = getPrisma();
+    const assessments = await db.assessment.findMany({
       where: whereClause,
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        productType: true,
+        totalScore: true,
+        category: true,
+        attachmentStyle: true,
+        dimensions: true,
+        createdAt: true,
         accessCode: {
           select: {
             code: true
@@ -88,7 +103,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (error: any) {
     console.error('Export error:', error);
     return res.status(500).json({ error: 'Internal server error' });
-  } finally {
-    await prisma.$disconnect();
   }
 }
