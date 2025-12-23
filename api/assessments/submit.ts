@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
-import { generateAIAnalysis } from '../services/deepseek.js';
+import { generateAIAnalysis } from '../../lib/services/deepseek.js';
 
 let prisma: PrismaClient | null = null;
 
