@@ -41,9 +41,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: 'Assessment not found' });
     }
 
-    // Parse JSON fields
-    const dimensions = JSON.parse(assessment.dimensions);
-    const answers = JSON.parse(assessment.answers);
+    // Parse JSON fields with error handling
+    let dimensions = [];
+    let answers = {};
+
+    try {
+      if (assessment.dimensions) {
+        dimensions = JSON.parse(assessment.dimensions);
+      }
+    } catch (e) {
+      console.error('Failed to parse dimensions:', e);
+    }
+
+    try {
+      if (assessment.answers) {
+        answers = JSON.parse(assessment.answers);
+      }
+    } catch (e) {
+      console.error('Failed to parse answers:', e);
+    }
 
     // Parse AI analysis - can be JSON object or plain string (for LCI)
     let parsedAnalysis = null;
