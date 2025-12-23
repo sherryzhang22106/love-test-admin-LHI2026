@@ -2,7 +2,14 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
+let prisma: PrismaClient | null = null;
+
+function getPrisma() {
+  if (!prisma) {
+    prisma = new PrismaClient();
+  }
+  return prisma;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
@@ -38,10 +45,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { productType } = req.query;
     const whereClause = productType ? { productType: productType as string } : {};
 
-    // Get statistics with optional productType filter
-    const total = await prisma.assessment.count({ where: whereClause });
+    const db = getPrisma();
 
-    const assessments = await prisma.assessment.findMany({ where: whereClause });
+    // Get statistics with optional productType filter
+    const total = await db.assessment.count({ where: whereClause });
+
+    const assessments = await db.assessment.findMany({ where: whereClause });
 
     // Calculate scores
     const scores = assessments.map(a => a.totalScore);
@@ -91,7 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }));
 
     // Get recent assessments with optional productType filter (including aiAnalysis)
-    const recentAssessments = await prisma.assessment.findMany({
+    const recentAssessments = await db.assessment.findMany({
       where: whereClause,
       take: 10,
       orderBy: { createdAt: 'desc' },
@@ -110,7 +119,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const recentAssessmentsForTrend = await prisma.assessment.findMany({
+    const recentAssessmentsForTrend = await db.assessment.findMany({
       where: {
         ...whereClause,
         createdAt: {
@@ -160,8 +169,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error: any) {
     console.error('Get stats error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  } finally {
-    await prisma.$disconnect();
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 }
