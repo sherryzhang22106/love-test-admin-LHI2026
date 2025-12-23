@@ -91,38 +91,78 @@ export default async function handler(
       return res.status(400).json({ error: '缺少必要参数' });
     }
 
-    const prompt = `你是情感关系专家，为用户生成LCI (Love Concentration Index) 爱情浓度测试报告。
+    // 计算各维度状态
+    const getDimensionStatus = (score: number) => {
+      if (score >= 32) return '优秀';
+      if (score >= 24) return '良好';
+      if (score >= 16) return '待提升';
+      return '需关注';
+    };
 
-用户数据：
-- 沟通: ${dimensionScores.communication}/40
-- 行动: ${dimensionScores.action}/40
-- 情感: ${dimensionScores.emotion}/40
-- 尊重: ${dimensionScores.respect}/40
-- 成长: ${dimensionScores.growth}/40
-- LCI指数: ${percentage}%
-- 等级: ${level}
+    const commStatus = getDimensionStatus(dimensionScores.communication);
+    const actStatus = getDimensionStatus(dimensionScores.action);
+    const emoStatus = getDimensionStatus(dimensionScores.emotion);
+    const respStatus = getDimensionStatus(dimensionScores.respect);
+    const growStatus = getDimensionStatus(dimensionScores.growth);
 
-请用Markdown格式生成约800字的专业报告，包含以下部分：
+    // 找出最高和最低维度
+    const dims = [
+      { name: '沟通', score: dimensionScores.communication },
+      { name: '行动', score: dimensionScores.action },
+      { name: '情感', score: dimensionScores.emotion },
+      { name: '尊重', score: dimensionScores.respect },
+      { name: '成长', score: dimensionScores.growth }
+    ];
+    const sorted = [...dims].sort((a, b) => b.score - a.score);
+    const highest = sorted[0];
+    const lowest = sorted[sorted.length - 1];
 
-## 📊 整体评估
-（100字，描述关系状态）
+    const prompt = `你是一位资深的亲密关系心理咨询师，请基于以下LCI爱情浓度测试数据，撰写一份专业深度的分析报告。
 
-## 📈 五维分析
-（每维度50字，分析得分含义）
+【测试数据】
+- LCI爱情浓度指数: ${percentage}%
+- 关系等级: ${level}
+- 五维得分详情:
+  · 沟通维度: ${dimensionScores.communication}/40 (${commStatus})
+  · 行动维度: ${dimensionScores.action}/40 (${actStatus})
+  · 情感维度: ${dimensionScores.emotion}/40 (${emoStatus})
+  · 尊重维度: ${dimensionScores.respect}/40 (${respStatus})
+  · 成长维度: ${dimensionScores.growth}/40 (${growStatus})
+- 最强维度: ${highest.name}(${highest.score}分)
+- 最弱维度: ${lowest.name}(${lowest.score}分)
 
-## 💪 关系闪光点
-（列出2-3个优势）
+【报告要求】
+请生成1200-1500字的深度报告，使用Markdown格式，包含以下部分：
 
-## 🔍 需要关注
-（列出1-2个待改善点）
+**整体评估**
+深入分析${percentage}%的爱情浓度意味着什么，这段关系目前处于什么状态，双方的情感投入程度如何。结合"${level}"这个等级，给出专业的关系诊断。(150字)
 
-## 🎁 改善建议
-（给出2-3条具体建议）
+**五维分析**
+对每个维度进行深度解读：
+- **沟通(${dimensionScores.communication}/40)**: 分析沟通模式、表达方式、倾听质量
+- **行动(${dimensionScores.action}/40)**: 分析付出程度、陪伴质量、承诺兑现
+- **情感(${dimensionScores.emotion}/40)**: 分析情感连接深度、安全感、亲密程度
+- **尊重(${dimensionScores.respect}/40)**: 分析边界感、价值认同、人格尊重
+- **成长(${dimensionScores.growth}/40)**: 分析共同愿景、相互促进、未来期待
+每个维度80-100字，要有具体的行为表现描述和心理洞察。
 
-## 💝 寄语
-（30字鼓励语）
+**关系闪光点**
+基于数据找出2-3个关系中的积极因素，具体说明为什么这些是优势，如何利用这些优势。
 
-要求：专业温暖，有针对性，不要泛泛而谈。`;
+**需要关注**
+指出1-2个核心问题，分析问题背后的心理动因，为什么这些问题如果不解决会影响关系。
+
+**改善建议**
+给出3条具体可操作的建议，每条建议要包含：具体做什么、怎么做、预期效果。建议要针对性强，不要泛泛而谈。
+
+**寄语**
+一句温暖有力的话，给予希望和方向。
+
+【风格要求】
+- 专业但不冰冷，温暖但不敷衍
+- 洞察深刻，直击问题本质
+- 建议具体可行，不说空话
+- 禁止使用"#"符号作为标题`;
 
     // 调用 DeepSeek API
     const apiResponse = await fetch(DEEPSEEK_API_URL, {
@@ -144,11 +184,11 @@ export default async function handler(
           }
         ],
         temperature: 0.75,
-        max_tokens: 1500,
+        max_tokens: 2500,
         top_p: 0.95,
         stream: false
       }),
-      signal: AbortSignal.timeout(50000) // 50秒超时
+      signal: AbortSignal.timeout(55000) // 55秒超时
     });
 
     if (!apiResponse.ok) {
