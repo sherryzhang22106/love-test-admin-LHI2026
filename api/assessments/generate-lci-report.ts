@@ -161,11 +161,11 @@ export default async function handler(
           }
         ],
         temperature: 0.75,
-        max_tokens: 4000,
+        max_tokens: 3000,
         top_p: 0.95,
         stream: false
       }),
-      signal: AbortSignal.timeout(60000) // 60秒超时
+      signal: AbortSignal.timeout(55000) // 55秒超时，给Vercel留余量
     });
 
     if (!apiResponse.ok) {
