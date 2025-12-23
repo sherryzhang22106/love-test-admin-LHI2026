@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String?  @unique
+  username  String?  @unique
+  password  String?
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assessments Assessment[]
+  @@map("users")
+}
+
+model AccessCode {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  productType String    @default("LHI")  // LHI, LCI, or ALL
+  isUsed      Boolean   @default(false)
+  usedAt      DateTime?
+  usedByIp    String?
+  batchId     String?
+  createdAt   DateTime  @default(now())
+
+  assessments  Assessment[]
+  @@index([code, isUsed])
+  @@index([productType])
+  @@map("access_codes")
+}
+
+model Assessment {
+  id              String   @id @default(uuid())
+  userId          String?
+  accessCodeId    String
+  productType     String   @default("LHI")  // LHI or LCI
+  totalScore      Int
+  category        String
+  attachmentStyle String?  // Optional for LCI (uses different fields)
+  dimensions      String
+  answers         String
+  aiAnalysis      String?
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime @default(now())
+
+  user       User?       @relation(fields: [userId], references: [id])
+  accessCode AccessCode  @relation(fields: [accessCodeId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([accessCodeId])
+  @@index([productType])
+  @@map("assessments")
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admins")
+}
