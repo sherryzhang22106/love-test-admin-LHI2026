@@ -50,10 +50,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Get statistics with optional productType filter
     const total = await db.assessment.count({ where: whereClause });
 
-    const assessments = await db.assessment.findMany({ where: whereClause });
+    // Only select fields we need (avoid 'scores' column that may not exist)
+    const assessments = await db.assessment.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        totalScore: true,
+        category: true,
+        attachmentStyle: true,
+        productType: true,
+        createdAt: true,
+      }
+    });
 
-    // Calculate scores
-    const scores = assessments.map(a => a.totalScore);
+    // Calculate scores (filter out nulls)
+    const scores = assessments.map(a => a.totalScore).filter((s): s is number => s !== null);
     const avgScore = scores.length > 0
       ? Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length)
       : 0;
