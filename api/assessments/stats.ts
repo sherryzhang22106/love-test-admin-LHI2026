@@ -51,15 +51,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const minScore = scores.length > 0 ? Math.min(...scores) : 0;
     const maxScore = scores.length > 0 ? Math.max(...scores) : 0;
 
-    // Category distribution - 只统计LHI/LCI的类别（ASA没有category）
-    const lhiLciAssessments = assessments.filter(a => a.productType === 'LHI' || a.productType === 'LCI');
-    const categoryCount: Record<string, number> = {};
-    lhiLciAssessments.forEach(a => {
+    // LHI Category distribution
+    const lhiAssessments = assessments.filter(a => a.productType === 'LHI');
+    const lhiCategoryCount: Record<string, number> = {};
+    lhiAssessments.forEach(a => {
       if (a.category) {
-        categoryCount[a.category] = (categoryCount[a.category] || 0) + 1;
+        lhiCategoryCount[a.category] = (lhiCategoryCount[a.category] || 0) + 1;
       }
     });
-    const categoryDistribution = Object.entries(categoryCount).map(([category, count]) => ({
+    const lhiCategoryDistribution = Object.entries(lhiCategoryCount).map(([category, count]) => ({
+      category,
+      count
+    }));
+
+    // LCI Category distribution
+    const lciAssessments = assessments.filter(a => a.productType === 'LCI');
+    const lciCategoryCount: Record<string, number> = {};
+    lciAssessments.forEach(a => {
+      if (a.category) {
+        lciCategoryCount[a.category] = (lciCategoryCount[a.category] || 0) + 1;
+      }
+    });
+    const lciCategoryDistribution = Object.entries(lciCategoryCount).map(([category, count]) => ({
       category,
       count
     }));
@@ -139,7 +152,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       avgScore,
       minScore,
       maxScore,
-      categoryDistribution,
+      lhiCategoryDistribution,
+      lciCategoryDistribution,
       attachmentDistribution,
       recentAssessments,
       dailyStats
