@@ -1,5 +1,13 @@
 {
   "version": 2,
+  "functions": {
+    "api/assessments/generate-asa-report.ts": {
+      "maxDuration": 60
+    },
+    "api/assessments/generate-lci-report.ts": {
+      "maxDuration": 60
+    }
+  },
   "builds": [
     {
       "src": "api/**/*.ts",
