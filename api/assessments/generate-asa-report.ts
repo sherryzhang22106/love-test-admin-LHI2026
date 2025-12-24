@@ -43,15 +43,20 @@ export default async function handler(
   req: VercelRequest,
   res: VercelResponse
 ) {
+  // CORS 设置 - 必须在最前面
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // 处理 OPTIONS 预检请求
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   // 只允许 POST 请求
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
-
-  // CORS 设置
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   // 获取客户端 IP
   const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
