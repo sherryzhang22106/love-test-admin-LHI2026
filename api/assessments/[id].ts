@@ -13,26 +13,63 @@ function getPrisma() {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
+  const { id } = req.query;
+
+  if (!id || typeof id !== 'string') {
+    return res.status(400).json({ error: 'Assessment ID is required' });
+  }
+
+  const db = getPrisma();
+
+  // POST: Update AI analysis
+  if (req.method === 'POST') {
+    try {
+      const { aiAnalysis } = req.body;
+
+      if (!aiAnalysis) {
+        return res.status(400).json({ error: 'AI analysis content is required' });
+      }
+
+      // Verify assessment exists
+      const assessment = await db.assessment.findUnique({
+        where: { id }
+      });
+
+      if (!assessment) {
+        return res.status(404).json({ error: 'Assessment not found' });
+      }
+
+      // Update AI analysis
+      await db.assessment.update({
+        where: { id },
+        data: { aiAnalysis: aiAnalysis }
+      });
+
+      console.log(`[Update AI] Assessment ${id} AI analysis updated, length: ${aiAnalysis.length}`);
+
+      return res.status(200).json({
+        success: true,
+        message: 'AI analysis saved successfully'
+      });
+    } catch (error: any) {
+      console.error('Update AI analysis error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+
+  // GET: Retrieve assessment
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { id } = req.query;
-
-    if (!id || typeof id !== 'string') {
-      return res.status(400).json({ error: 'Assessment ID is required' });
-    }
-
-    const db = getPrisma();
-
     const assessment = await db.assessment.findUnique({
       where: { id }
     });
