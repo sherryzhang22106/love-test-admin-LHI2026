@@ -11,6 +11,9 @@ function getPrisma() {
   return prisma;
 }
 
+// 万能码列表 - 可无限次使用
+const MASTER_CODES = ['LHI159951', 'LCI2025', 'ASA2025', 'ALL2025'];
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -55,7 +58,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: 'Access code not found' });
     }
 
-    if (codeRecord.isUsed) {
+    // 万能码跳过已使用检查
+    const isMasterCode = MASTER_CODES.includes(accessCode.toUpperCase());
+
+    if (!isMasterCode && codeRecord.isUsed) {
       return res.status(400).json({ error: 'Access code already used' });
     }
 
@@ -109,17 +115,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
     console.log('Assessment created with ID:', assessment.id);
 
-    console.log('Updating access code status...');
-    // Mark access code as used
-    await db.accessCode.update({
-      where: { id: codeRecord.id },
-      data: {
-        isUsed: true,
-        usedAt: new Date(),
-        usedByIp: ipAddress
-      }
-    });
-    console.log('Access code marked as used:', codeRecord.code);
+    // 万能码不标记为已使用
+    if (!isMasterCode) {
+      console.log('Updating access code status...');
+      // Mark access code as used
+      await db.accessCode.update({
+        where: { id: codeRecord.id },
+        data: {
+          isUsed: true,
+          usedAt: new Date(),
+          usedByIp: ipAddress
+        }
+      });
+      console.log('Access code marked as used:', codeRecord.code);
+    } else {
+      console.log('Master code used, not marking as used:', codeRecord.code);
+    }
 
     console.log('=== SUBMIT ASSESSMENT SUCCESS ===');
     console.log('Assessment ID:', assessment.id);
