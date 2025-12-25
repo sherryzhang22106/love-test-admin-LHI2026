@@ -95,27 +95,19 @@ export default async function handler(
       fearful: ((scores.fearful / MAX_PER_TYPE) * 100).toFixed(1),
     };
 
-    const prompt = `你是一位依恋理论专家。请基于以下数据生成一份深度测评报告（800-1200字）。
+    const prompt = `基于以下依恋测评数据，生成简明深度报告（500-700字）。
 
-【核心数据】
-- 依恋类型: ${primaryType}
-- 得分: 安全型 ${rates.secure}%, 焦虑型 ${rates.anxious}%, 回避型 ${rates.avoidant}%, 恐惧型 ${rates.fearful}%
+数据: ${primaryType}型，安全${rates.secure}%/焦虑${rates.anxious}%/回避${rates.avoidant}%/恐惧${rates.fearful}%
 
-${answerSummary ? `【答题摘要】\n${answerSummary}` : ''}
+要求：用**加粗**做标题，段落间空行，禁用#符号。
 
-【格式要求】
-- 使用**加粗**作为标题
-- 段落间空行
-- 禁用 # 标题符号
+框架：
+1. **模式解析**：主导类型成因（2段）
+2. **行为特征**：防御机制（1段）
+3. **成长建议**：2-3条具体练习
+4. **结语**（1句话）
 
-【内容框架】
-1. **核心模式解析**：分析主导类型的心理成因
-2. **行为模式解构**：分析防御机制和行为闭环
-3. **优势与改变契机**：挖掘正向潜质
-4. **成长方案**：提供具体心理练习建议
-5. **结语**
-
-直接开始正文，中文撰写。`;
+直接输出正文。`;
 
     // 调用 DeepSeek API
     const apiResponse = await fetch(DEEPSEEK_API_URL, {
@@ -137,7 +129,7 @@ ${answerSummary ? `【答题摘要】\n${answerSummary}` : ''}
           }
         ],
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 1200,
         top_p: 0.9
       }),
       signal: AbortSignal.timeout(55000) // 55秒超时
