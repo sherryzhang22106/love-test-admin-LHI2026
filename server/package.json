@@ -1,6 +1,7 @@
 {
   "name": "lhi-calculator-server",
   "version": "1.0.0",
+  "type": "module",
   "description": "LHI Calculator Backend API Server",
   "main": "dist/index.js",
   "scripts": {
