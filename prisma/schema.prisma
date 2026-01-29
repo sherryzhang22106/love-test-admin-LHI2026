@@ -48,6 +48,7 @@ model Assessment {
   dimensions      String   // JSON string
   answers         String   // JSON string
   aiAnalysis      String?
+  aiStatus        String   @default("pending")  // pending, generating, completed, failed
   ipAddress       String?
   userAgent       String?
   createdAt       DateTime @default(now())

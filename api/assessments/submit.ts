@@ -71,16 +71,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                      'unknown';
     const userAgent = req.headers['user-agent'] || 'unknown';
 
-    // Generate AI analysis first (async call to DeepSeek) - only for LHI
-    console.log('Generating AI analysis...');
-    let aiAnalysisObject;
+    // 根据产品类型决定AI生成策略
+    let aiAnalysisObject = null;
+    let aiStatus = 'pending';
+
     if (productType === 'LHI') {
+      // LHI: 同步生成AI分析（较短，可以在10秒内完成）
+      console.log('Generating LHI AI analysis...');
       try {
         aiAnalysisObject = await generateAIAnalysis(totalScore, category, attachmentStyle, dimensions);
-        console.log('AI analysis generated successfully');
+        aiStatus = 'completed';
+        console.log('LHI AI analysis generated successfully');
       } catch (aiError: any) {
-        console.error('AI analysis generation failed:', aiError.message);
-        // Use fallback but continue with data saving
+        console.error('LHI AI analysis generation failed:', aiError.message);
         aiAnalysisObject = {
           resultInterpretation: '分析生成失败，请稍后重试',
           strengths: '',
@@ -88,10 +91,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           personalizedAdvice: '',
           professionalAdvice: ''
         };
+        aiStatus = 'failed';
       }
+    } else if (productType === 'ASA') {
+      // ASA: 异步生成AI报告（7000字，需要较长时间）
+      // 先保存记录，AI报告稍后通过单独的API生成
+      aiStatus = 'pending';
+      console.log('ASA assessment - AI report will be generated asynchronously');
     } else {
-      // For LCI, AI analysis is generated separately via DeepSeek in frontend
-      aiAnalysisObject = null;
+      // LCI: AI分析由前端单独调用生成
+      aiStatus = 'pending';
     }
 
     // Store as JSON string in database
@@ -109,11 +118,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         dimensions: JSON.stringify(dimensions),
         answers: JSON.stringify(answers),
         aiAnalysis,
+        aiStatus,
         ipAddress,
         userAgent
       }
     });
-    console.log('Assessment created with ID:', assessment.id);
+    console.log('Assessment created with ID:', assessment.id, 'aiStatus:', aiStatus);
 
     // 万能码不标记为已使用
     if (!isMasterCode) {
@@ -142,7 +152,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       category,
       attachmentStyle,
       dimensions,
-      aiAnalysis: aiAnalysisObject
+      aiAnalysis: aiAnalysisObject,
+      aiStatus
     });
   } catch (error: any) {
     console.error('=== SUBMIT ASSESSMENT ERROR ===');

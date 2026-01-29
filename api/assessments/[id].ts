@@ -125,6 +125,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       dimensions,
       answers,
       aiAnalysis: parsedAnalysis,
+      aiStatus: (assessment as any).aiStatus || 'completed',
       createdAt: assessment.createdAt
     });
   } catch (error: any) {
