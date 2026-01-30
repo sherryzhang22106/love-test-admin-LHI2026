@@ -150,7 +150,7 @@ export default async function handler(
 
   if (!DEEPSEEK_API_KEY) {
     console.error('Missing DEEPSEEK_API_KEY');
-    return res.status(500).json({ error: '服务配置错误，请联系管理员' });
+    return res.status(500).json({ error: '服务配置错误：缺少API密钥' });
   }
 
   try {
@@ -160,7 +160,7 @@ export default async function handler(
       return res.status(400).json({ error: '缺少必要参数' });
     }
 
-    console.log(`[ASA Report] Starting generation, stream=${stream}, assessmentId=${assessmentId || 'N/A'}`);
+    console.log(`[ASA Report] Starting generation, stream=${stream}, assessmentId=${assessmentId || 'N/A'}, API_KEY exists: ${!!DEEPSEEK_API_KEY}`);
 
     const MAX_PER_TYPE = 160;
     const rates = {
@@ -200,8 +200,8 @@ export default async function handler(
 
       if (!apiResponse.ok) {
         const errorData = await apiResponse.json().catch(() => ({}));
-        console.error('[DeepSeek API Error]', apiResponse.status, errorData);
-        res.write(`data: ${JSON.stringify({ error: '生成报告时遇到问题' })}\n\n`);
+        console.error('[DeepSeek API Error] Status:', apiResponse.status, 'Error:', JSON.stringify(errorData));
+        res.write(`data: ${JSON.stringify({ error: `API错误: ${apiResponse.status} - ${errorData.error?.message || '未知错误'}` })}\n\n`);
         res.end();
         return;
       }
@@ -290,7 +290,9 @@ export default async function handler(
     });
 
     if (!apiResponse.ok) {
-      return res.status(500).json({ error: '生成报告时遇到问题，请稍后重试' });
+      const errorData = await apiResponse.json().catch(() => ({}));
+      console.error('[DeepSeek API Error] Status:', apiResponse.status, 'Error:', JSON.stringify(errorData));
+      return res.status(500).json({ error: `API错误: ${apiResponse.status} - ${errorData.error?.message || '未知错误'}` });
     }
 
     const data = await apiResponse.json();
