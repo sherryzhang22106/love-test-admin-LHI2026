@@ -282,7 +282,7 @@ export default async function handler(
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
-        max_tokens: 12000,
+        max_tokens: 8192,
         frequency_penalty: 0.3,
         top_p: 0.9
       }),
