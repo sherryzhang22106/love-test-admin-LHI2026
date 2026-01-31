@@ -483,6 +483,7 @@ const Dashboard: React.FC<DashboardProps> = ({ admin, onLogout }) => {
                         <tr>
                           <th className="px-4 py-3 text-left text-slate-600 font-medium">评估ID</th>
                           <th className="px-4 py-3 text-left text-slate-600 font-medium">分数</th>
+                          <th className="px-4 py-3 text-left text-slate-600 font-medium">百分比</th>
                           <th className="px-4 py-3 text-left text-slate-600 font-medium">类别</th>
                           <th className="px-4 py-3 text-left text-slate-600 font-medium">兑换码</th>
                           <th className="px-4 py-3 text-left text-slate-600 font-medium">AI报告</th>
@@ -490,10 +491,24 @@ const Dashboard: React.FC<DashboardProps> = ({ admin, onLogout }) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {assessments.map((assessment) => (
+                        {assessments.map((assessment) => {
+                          // 解析 dimensions 获取百分比
+                          let percentStr = '-';
+                          try {
+                            const dims = typeof assessment.dimensions === 'string'
+                              ? JSON.parse(assessment.dimensions)
+                              : assessment.dimensions;
+                            if (Array.isArray(dims)) {
+                              const mainTypes = dims.filter((d: any) => ['安全型', '焦虑型', '回避型', '恐惧型'].includes(d.name));
+                              percentStr = mainTypes.map((d: any) => `${d.name.replace('型', '')}:${d.percent || Math.round((d.score / d.maxScore) * 100)}%`).join(' ');
+                            }
+                          } catch (e) {}
+
+                          return (
                           <tr key={assessment.id} className="border-t border-slate-100 hover:bg-slate-50">
                             <td className="px-4 py-3 text-slate-500 text-xs font-mono">{assessment.id.slice(0, 8)}</td>
                             <td className="px-4 py-3 font-bold text-purple-600">{assessment.totalScore}</td>
+                            <td className="px-4 py-3 text-xs text-slate-600">{percentStr}</td>
                             <td className="px-4 py-3 text-slate-700">{assessment.category}</td>
                             <td className="px-4 py-3 text-xs font-mono text-slate-600">{assessment.accessCode?.code || '-'}</td>
                             <td className="px-4 py-3">
@@ -534,7 +549,8 @@ const Dashboard: React.FC<DashboardProps> = ({ admin, onLogout }) => {
                               {new Date(assessment.createdAt).toLocaleString()}
                             </td>
                           </tr>
-                        ))}
+                        );
+                        })}
                       </tbody>
                     </table>
                   </div>

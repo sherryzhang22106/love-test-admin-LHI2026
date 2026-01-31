@@ -245,16 +245,33 @@ export default async function handler(
             if (line.startsWith('data: ')) {
               const data = line.slice(6);
               if (data === '[DONE]') {
-                // 流结束，保存到数据库
+                // 流结束，保存到数据库（追加模式）
                 if (assessmentId && fullContent) {
                   const db = getPrisma();
                   try {
                     const cleanContent = fullContent.replace(/#{1,6}\s?/g, "");
+
+                    // 获取现有的 aiAnalysis
+                    const existing = await db.assessment.findUnique({
+                      where: { id: assessmentId },
+                      select: { aiAnalysis: true }
+                    });
+
+                    // 根据 part 决定如何保存
+                    let newAnalysis = cleanContent;
+                    if (existing?.aiAnalysis && part > 1) {
+                      // 追加到现有内容
+                      newAnalysis = existing.aiAnalysis + '\n\n' + cleanContent;
+                    }
+
+                    // 只有下篇(part=3)完成时才标记为 completed
+                    const newStatus = part === 3 ? 'completed' : 'generating';
+
                     await db.assessment.update({
                       where: { id: assessmentId },
-                      data: { aiAnalysis: cleanContent, aiStatus: 'completed' }
+                      data: { aiAnalysis: newAnalysis, aiStatus: newStatus }
                     });
-                    console.log(`[ASA Report] Saved to DB, length: ${cleanContent.length}`);
+                    console.log(`[ASA Report] Saved part ${part} to DB, total length: ${newAnalysis.length}, status: ${newStatus}`);
                   } catch (e) {
                     console.error('[ASA Report] Failed to save:', e);
                   }
