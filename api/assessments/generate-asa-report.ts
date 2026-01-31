@@ -37,7 +37,7 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-// 上篇提示词：写在前面 + 依恋类型解析 + 依恋形成分析
+// 上篇提示词：写在前面 + 依恋类型解析
 function buildPromptPart1(primaryType: string, rates: { secure: string; anxious: string; avoidant: string; fearful: string }) {
   return `你是一位资深的依恋理论心理咨询师，擅长结合Bowlby依恋理论和Bartholomew四分类模型，为来访者提供深度的依恋风格分析。
 
@@ -46,22 +46,18 @@ function buildPromptPart1(primaryType: string, rates: { secure: string; anxious:
 - **得分率**：安全型${rates.secure}%、焦虑型${rates.anxious}%、回避型${rates.avoidant}%、恐惧型${rates.fearful}%
 
 ## 任务
-请生成报告的**上篇**（约3000字），包含以下内容：
+请生成报告的**上篇**（约2000字），包含以下内容：
 
 **1️⃣ 写在前面**（150字）
 - 温暖的开场白，感谢用户完成测评
 - 简要说明这份报告的价值
 - 使用"你"称呼
 
-**2️⃣ 你的依恋类型深度解析**（800-1000字）
+**2️⃣ 你的依恋类型深度解析**（1500-1800字）
 - 一句话特征：精准概括用户的依恋类型
-- 类型详解：基于Bartholomew模型解释核心特征
-- 你的独特呈现：结合数据分析在关系中的典型表现
-
-**3️⃣ 追溯根源：你的依恋形成分析**（1200-1500字）
-- 3.1 早期依恋经历分析（400-500字）
-- 3.2 创伤性经验识别（300-400字）
-- 3.3 代际传递模式（300-400字）
+- 类型详解：基于Bartholomew模型解释核心特征，结合得分率数据
+- 你的独特呈现：在关系中的典型表现
+- 自我模型与他人模型分析
 
 ## 要求
 1. 使用**加粗**标记标题，禁用#符号
@@ -72,7 +68,7 @@ function buildPromptPart1(primaryType: string, rates: { secure: string; anxious:
 直接输出正文。`;
 }
 
-// 下篇提示词：当下困境 + 配对分析 + 成长路径 + 结语
+// 中篇提示词：依恋形成分析 + 当下困境
 function buildPromptPart2(primaryType: string, rates: { secure: string; anxious: string; avoidant: string; fearful: string }) {
   return `你是一位资深的依恋理论心理咨询师，擅长结合Bowlby依恋理论和Bartholomew四分类模型，为来访者提供深度的依恋风格分析。
 
@@ -81,16 +77,41 @@ function buildPromptPart2(primaryType: string, rates: { secure: string; anxious:
 - **得分率**：安全型${rates.secure}%、焦虑型${rates.anxious}%、回避型${rates.avoidant}%、恐惧型${rates.fearful}%
 
 ## 任务
-请生成报告的**下篇**（约3500字），包含以下内容：
+请生成报告的**中篇**（约2500字），包含以下内容：
 
-**4️⃣ 当下困境：你的关系模式深度剖析**（1500-1800字）
-- 4.1 亲密关系中的行为模式（500-600字）
-- 4.2 情感调节的困境（400-500字）
-- 4.3 深层信念系统（300-400字）
-- 4.4 防御机制解析（300-400字）
+**3️⃣ 追溯根源：你的依恋形成分析**（1200-1500字）
+- 3.1 早期依恋经历分析（400-500字）
+- 3.2 创伤性经验识别（300-400字）
+- 3.3 代际传递模式（300-400字）
+
+**4️⃣ 当下困境：你的关系模式剖析**（1000-1200字）
+- 4.1 亲密关系中的行为模式（400-500字）
+- 4.2 情感调节的困境（300-400字）
+- 4.3 深层信念系统与防御机制（300-400字）
+
+## 要求
+1. 使用**加粗**标记标题，禁用#符号
+2. 温暖专业，使用"你"
+3. 引用依恋理论
+4. 具体化分析
+
+直接输出正文。`;
+}
+
+// 下篇提示词：配对分析 + 成长路径 + 结语
+function buildPromptPart3(primaryType: string, rates: { secure: string; anxious: string; avoidant: string; fearful: string }) {
+  return `你是一位资深的依恋理论心理咨询师，擅长结合Bowlby依恋理论和Bartholomew四分类模型，为来访者提供深度的依恋风格分析。
+
+## 测评结果
+- **主要依恋类型**：${primaryType}
+- **得分率**：安全型${rates.secure}%、焦虑型${rates.anxious}%、回避型${rates.avoidant}%、恐惧型${rates.fearful}%
+
+## 任务
+请生成报告的**下篇**（约2000字），包含以下内容：
 
 **5️⃣ 如果你恋爱了：关系配对分析**（600-800字）
 - 与四种类型伴侣的配对分析
+- 每种配对的匹配度、可能冲突、相处建议
 
 **6️⃣ 成长路径：从不安全到安全型**（1000-1200字）
 - 6.1 你可以改变吗？（150-200字）
@@ -158,8 +179,15 @@ export default async function handler(
       fearful: ((scores.fearful / MAX_PER_TYPE) * 100).toFixed(1),
     };
 
-    // 根据 part 参数选择提示词
-    const prompt = part === 2 ? buildPromptPart2(primaryType, rates) : buildPromptPart1(primaryType, rates);
+    // 根据 part 参数选择提示词 (1=上篇, 2=中篇, 3=下篇)
+    let prompt: string;
+    if (part === 2) {
+      prompt = buildPromptPart2(primaryType, rates);
+    } else if (part === 3) {
+      prompt = buildPromptPart3(primaryType, rates);
+    } else {
+      prompt = buildPromptPart1(primaryType, rates);
+    }
 
     // 流式响应
     if (stream) {
