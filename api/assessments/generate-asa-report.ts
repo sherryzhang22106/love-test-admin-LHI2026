@@ -37,86 +37,74 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-function buildPrompt(primaryType: string, rates: { secure: string; anxious: string; avoidant: string; fearful: string }) {
-  return `你是一位资深的依恋理论心理咨询师，拥有15年以上的临床经验，擅长结合Bowlby依恋理论、Bartholomew四分类模型和成人依恋访谈(AAI)方法，为来访者提供深度的依恋风格分析。
+// 上篇提示词：写在前面 + 依恋类型解析 + 依恋形成分析
+function buildPromptPart1(primaryType: string, rates: { secure: string; anxious: string; avoidant: string; fearful: string }) {
+  return `你是一位资深的依恋理论心理咨询师，擅长结合Bowlby依恋理论和Bartholomew四分类模型，为来访者提供深度的依恋风格分析。
 
-你的专业特点：
-1. 温暖共情但不失专业边界
-2. 善于从测评数据中洞察深层心理机制
-3. 语言风格：既有学术深度，又通俗易懂，像在与来访者面对面交流
-4. 不回避痛苦，但始终传递希望和成长可能性
-5. 每个结论都有理论依据和数据支撑
-
-你的任务：根据用户的依恋测评结果，生成一份**7000字左右**的完整深度心理分析报告，帮助用户真正理解自己的依恋模式、形成根源、当前困境和成长路径。
-
-输出格式要求：使用**加粗**标记章节标题，段落间空行，禁用#符号，确保排版清晰易读。
-
----
-
-## 测评结果数据
-
-### 依恋类型判定
-
-**主要依恋类型判定逻辑说明**：
-本测评采用修正后的判定逻辑，优先识别恐惧型（焦虑+回避双高），并新增"混合型"分类：
-
-1. **恐惧型**（最优先）：焦虑型得分率 ≥ 45% AND 回避型得分率 ≥ 45%
-2. **安全型**：安全型得分率 ≥ 55% AND 焦虑型 < 40% AND 回避型 < 40%
-3. **焦虑型**：焦虑型得分率 ≥ 50% AND 回避型得分率 < 45%
-4. **回避型**：回避型得分率 ≥ 50% AND 焦虑型得分率 < 45%
-5. **混合型**（兜底）：不符合以上条件时，再细分为焦虑倾向混合型、回避倾向混合型、平衡混合型
-
+## 测评结果
 - **主要依恋类型**：${primaryType}
-- **各类型得分率**：
-  - 安全型：${rates.secure}%
-  - 焦虑型：${rates.anxious}%
-  - 回避型：${rates.avoidant}%
-  - 恐惧型：${rates.fearful}%
+- **得分率**：安全型${rates.secure}%、焦虑型${rates.anxious}%、回避型${rates.avoidant}%、恐惧型${rates.fearful}%
 
----
+## 任务
+请生成报告的**上篇**（约3000字），包含以下内容：
 
-## 报告生成要求
-
-请生成一份**7000字左右**的深度分析报告，严格遵循以下结构：
-
-### 1️⃣ 写在前面（150字）
+**1️⃣ 写在前面**（150字）
 - 温暖的开场白，感谢用户完成测评
-- 简要说明这份报告的价值和阅读建议
-- 使用第二人称"你"，营造一对一咨询的亲密感
+- 简要说明这份报告的价值
+- 使用"你"称呼
 
-### 2️⃣ 你的依恋类型深度解析（800-1000字）
-- 一句话特征：用一句话精准概括用户的依恋类型
-- 类型详解：基于Bartholomew模型，解释该类型的核心特征，结合用户的得分率数据分析
-- 你的独特呈现：结合用户的具体数据分析，指出该类型在关系中的典型表现
+**2️⃣ 你的依恋类型深度解析**（800-1000字）
+- 一句话特征：精准概括用户的依恋类型
+- 类型详解：基于Bartholomew模型解释核心特征
+- 你的独特呈现：结合数据分析在关系中的典型表现
 
-### 3️⃣ 追溯根源：你的依恋形成分析（1200-1500字）
+**3️⃣ 追溯根源：你的依恋形成分析**（1200-1500字）
 - 3.1 早期依恋经历分析（400-500字）
 - 3.2 创伤性经验识别（300-400字）
 - 3.3 代际传递模式（300-400字）
 
-### 4️⃣ 当下困境：你的关系模式深度剖析（1500-1800字）
+## 要求
+1. 使用**加粗**标记标题，禁用#符号
+2. 温暖专业，使用"你"
+3. 引用依恋理论
+4. 具体化分析
+
+直接输出正文。`;
+}
+
+// 下篇提示词：当下困境 + 配对分析 + 成长路径 + 结语
+function buildPromptPart2(primaryType: string, rates: { secure: string; anxious: string; avoidant: string; fearful: string }) {
+  return `你是一位资深的依恋理论心理咨询师，擅长结合Bowlby依恋理论和Bartholomew四分类模型，为来访者提供深度的依恋风格分析。
+
+## 测评结果
+- **主要依恋类型**：${primaryType}
+- **得分率**：安全型${rates.secure}%、焦虑型${rates.anxious}%、回避型${rates.avoidant}%、恐惧型${rates.fearful}%
+
+## 任务
+请生成报告的**下篇**（约3500字），包含以下内容：
+
+**4️⃣ 当下困境：你的关系模式深度剖析**（1500-1800字）
 - 4.1 亲密关系中的行为模式（500-600字）
 - 4.2 情感调节的困境（400-500字）
 - 4.3 深层信念系统（300-400字）
 - 4.4 防御机制解析（300-400字）
 
-### 5️⃣ 如果你恋爱了：关系配对分析（600-800字）
+**5️⃣ 如果你恋爱了：关系配对分析**（600-800字）
 - 与四种类型伴侣的配对分析
 
-### 6️⃣ 成长路径：从不安全到安全型（1000-1200字）
+**6️⃣ 成长路径：从不安全到安全型**（1000-1200字）
 - 6.1 你可以改变吗？（150-200字）
 - 6.2 三阶段成长路径（500-600字）
 - 6.3 具体练习清单（300-400字）
 
-### 7️⃣ 写在最后（150-200字）
+**7️⃣ 写在最后**（150-200字）
 - 温暖鼓励的结语
 
-## 写作要求
-1. 使用**加粗**标记章节标题，禁用#符号
-2. 第二人称"你"，温暖专业
-3. 引用Bowlby、Ainsworth、Bartholomew等理论
-4. 具体化分析，避免套话
-5. 字数必须达到7000字左右
+## 要求
+1. 使用**加粗**标记标题，禁用#符号
+2. 温暖专业，使用"你"
+3. 引用依恋理论
+4. 具体化分析
 
 直接输出正文。`;
 }
@@ -154,13 +142,13 @@ export default async function handler(
   }
 
   try {
-    const { scores, primaryType, assessmentId, stream = true } = req.body;
+    const { scores, primaryType, assessmentId, stream = true, part = 1 } = req.body;
 
     if (!scores || !primaryType) {
       return res.status(400).json({ error: '缺少必要参数' });
     }
 
-    console.log(`[ASA Report] Starting generation, stream=${stream}, assessmentId=${assessmentId || 'N/A'}, API_KEY exists: ${!!DEEPSEEK_API_KEY}`);
+    console.log(`[ASA Report] Starting generation, stream=${stream}, part=${part}, assessmentId=${assessmentId || 'N/A'}, API_KEY exists: ${!!DEEPSEEK_API_KEY}`);
 
     const MAX_PER_TYPE = 160;
     const rates = {
@@ -170,7 +158,8 @@ export default async function handler(
       fearful: ((scores.fearful / MAX_PER_TYPE) * 100).toFixed(1),
     };
 
-    const prompt = buildPrompt(primaryType, rates);
+    // 根据 part 参数选择提示词
+    const prompt = part === 2 ? buildPromptPart2(primaryType, rates) : buildPromptPart1(primaryType, rates);
 
     // 流式响应
     if (stream) {
