@@ -13,7 +13,7 @@ function getPrisma() {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
@@ -28,14 +28,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const db = getPrisma();
 
-  // POST: Update AI analysis
-  if (req.method === 'POST') {
+  // POST or PUT: Update AI analysis
+  if (req.method === 'POST' || req.method === 'PUT') {
     try {
-      const { aiAnalysis } = req.body;
-
-      if (!aiAnalysis) {
-        return res.status(400).json({ error: 'AI analysis content is required' });
-      }
+      const { aiAnalysis, aiAnalysisPart, part, appendMode } = req.body;
 
       // Verify assessment exists
       const assessment = await db.assessment.findUnique({
@@ -46,18 +42,50 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json({ error: 'Assessment not found' });
       }
 
-      // Update AI analysis
-      await db.assessment.update({
-        where: { id },
-        data: { aiAnalysis: aiAnalysis }
-      });
+      // 处理分部分保存的情况
+      if (aiAnalysisPart !== undefined) {
+        let newAnalysis = aiAnalysisPart;
 
-      console.log(`[Update AI] Assessment ${id} AI analysis updated, length: ${aiAnalysis.length}`);
+        // 如果是追加模式且已有内容
+        if (appendMode && assessment.aiAnalysis) {
+          newAnalysis = assessment.aiAnalysis + '\n\n' + aiAnalysisPart;
+        }
 
-      return res.status(200).json({
-        success: true,
-        message: 'AI analysis saved successfully'
-      });
+        // 只有第4部分完成时才标记为 completed
+        const newStatus = part === 4 ? 'completed' : 'generating';
+
+        await db.assessment.update({
+          where: { id },
+          data: {
+            aiAnalysis: newAnalysis,
+            aiStatus: newStatus
+          }
+        });
+
+        console.log(`[Update AI] Assessment ${id} part ${part} saved, total length: ${newAnalysis.length}, status: ${newStatus}`);
+
+        return res.status(200).json({
+          success: true,
+          message: `Part ${part} saved successfully`
+        });
+      }
+
+      // 处理完整保存的情况
+      if (aiAnalysis) {
+        await db.assessment.update({
+          where: { id },
+          data: { aiAnalysis: aiAnalysis }
+        });
+
+        console.log(`[Update AI] Assessment ${id} AI analysis updated, length: ${aiAnalysis.length}`);
+
+        return res.status(200).json({
+          success: true,
+          message: 'AI analysis saved successfully'
+        });
+      }
+
+      return res.status(400).json({ error: 'AI analysis content is required' });
     } catch (error: any) {
       console.error('Update AI analysis error:', error);
       return res.status(500).json({ error: 'Internal server error' });

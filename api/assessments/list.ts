@@ -53,6 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         category: true,
         attachmentStyle: true,
         productType: true,
+        dimensions: true,
         aiAnalysis: true,
         createdAt: true,
         accessCode: {
